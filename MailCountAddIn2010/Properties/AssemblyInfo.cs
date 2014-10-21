@@ -6,12 +6,12 @@ using System.Security;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("MailCountAddIn2010")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("CsMailCount")]
+[assembly: AssemblyDescription("Outlook 2010 PlugIn to track yesterdays sent and received e-mail on www.CrowdStatus.net")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("www.min.at")]
 [assembly: AssemblyProduct("MailCountAddIn2010")]
-[assembly: AssemblyCopyright("Copyright ©  2014")]
+[assembly: AssemblyCopyright("Copyright © richard.prinz@min.at  2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

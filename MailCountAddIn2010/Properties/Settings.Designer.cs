@@ -22,5 +22,17 @@ namespace MailCountAddIn2010.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://www.crowdstatus.net/de/emails")]
+        public global::System.Uri PublishURL {
+            get {
+                return ((global::System.Uri)(this["PublishURL"]));
+            }
+            set {
+                this["PublishURL"] = value;
+            }
+        }
     }
 }

@@ -9,130 +9,132 @@ using Office = Microsoft.Office.Core;
 using System.Windows.Forms;
 using Microsoft.Office.Interop.Outlook;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Net.Http;
+using System.Net.Http.Headers;
 #endregion
 
 namespace MailCountAddIn2010
 {
     public partial class ThisAddIn
     {
-        #region variables
+        #region Variables
+        //private string w;
+        private System.Threading.Timer _t;
+        private string _currentUsersEmailAddress;
         #endregion
 
         #region Event Handler
         #region Plugin_Startup
         private void Plugin_Startup(object sender, System.EventArgs e)
         {
-            MessageBox.Show("Plugin started", "MailCount",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            //MessageBox.Show("Plugin started", "MailCount",
+            //    MessageBoxButtons.OK, MessageBoxIcon.Information);
 
             InitPlugin();
 
-            ShowStats();
+            ProcessData();
         }
         #endregion
         #region Plugin_Shutdown
         private void Plugin_Shutdown(object sender, System.EventArgs e)
         {
-            MessageBox.Show("Plugin stopped", "MailCount",
-                MessageBoxButtons.OK, MessageBoxIcon.Stop);
+            DisposePlugin();
+
+            //MessageBox.Show("Plugin stopped", "MailCount",
+            //    MessageBoxButtons.OK, MessageBoxIcon.Stop);
         }
         #endregion
         #endregion
 
-
+        #region Private Methods
+        #region InitPlugin
         private void InitPlugin()
         {
+            DisposePlugin();
+
+            _currentUsersEmailAddress = this.Application.ActiveExplorer().Session
+                .CurrentUser.AddressEntry.GetExchangeUser().PrimarySmtpAddress;
+
+            //DateTime dueTime = new DateTime(
+            //    DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day, DateTime.Now.Hour + 1, 0, 0);
             DateTime dueTime = new DateTime(
-                DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day, DateTime.Now.Hour + 1, 0, 0);
+                DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day, 0, 5, 0).AddDays(1);
             TimeSpan timeRemaining = dueTime.Subtract(DateTime.Now);
 
-            System.Threading.Timer t = new System.Threading.Timer(
+            _t = new System.Threading.Timer(
                 new System.Threading.TimerCallback(TimerTick), null,
-                Convert.ToInt32(timeRemaining.TotalMilliseconds), // start at next full hour
-                60 * 60 * 1000); // repeat every hour
+                Convert.ToInt32(timeRemaining.TotalMilliseconds), // start at next day 00:05:00
+                24 * 60 * 60 * 1000); // repeat every day
 
             MessageBox.Show(String.Format("Start timer in {0}", timeRemaining),
                 "Info",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
+        #endregion
+        #region DisposePlugin
+        private void DisposePlugin()
+        {
+            if (_t != null)
+            {
+                _t.Dispose();
+                _t = null;
+            }
+        }
+        #endregion
 
+        #region TimerTick
         private void TimerTick(object state)
         {
-            ShowStats();
+            ProcessData();
         }
-
-        private void ShowStats()
+        #endregion
+        #region ProcessData
+        private void ProcessData()
         {
             try
             {
-                DateTime yesterday = DateTime.Now.AddDays(-1).Date;
-                long sentMails = CountSentEmails(yesterday);
-                long receivedMails = CountReceivedEmails(yesterday);
+                DateTime today = DateTime.Now;
+                DateTime yesterday = today.AddDays(-1).Date;
+
+                long totalSentMails = 0;
+                long sentMails = CountSentEmails(yesterday, out totalSentMails, "^[Vv]ault");
+                //MessageBox.Show(String.Format("Sent:\r\n{0}", w), "Message counts",
+                //    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                long totalReceivedMails = 0;
+                long receivedMails = CountReceivedEmails(yesterday, out totalReceivedMails, "^[Vv]ault");
+                //MessageBox.Show(String.Format("Received:\r\n{0}", w), "Message counts",
+                //    MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 MessageBox.Show(String.Format(
-                        "Now is {0:d}\r\n" +
-                        "Yesterdays ({1:d}) sent {2} and received {3} mails.",
-                            DateTime.Now, yesterday.Date, sentMails, receivedMails),
+                        "Today is {0:d}\r\n" +
+                        "Sending yesterdays {1:d}\r\n" +
+                        "\tsent {2} ( from total {3} ) and \r\n" +
+                        "\treceived {4} ( from total {5} ) e-mails\r\n" +
+                        "\tfor user {6} to http://www.crowdstatus.net/",
+                            DateTime.Now, yesterday.Date,
+                            sentMails, totalSentMails,
+                            receivedMails, totalReceivedMails,
+                            _currentUsersEmailAddress),
                     "MailCount",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                SendToCrowdStatus(today, _currentUsersEmailAddress, sentMails, receivedMails).Wait();
+
             }
             catch (System.Exception ex)
             {
-                MessageBox.Show("Error occurred while counting mail\r\n" + ex.ToString(), 
-                    "Error", 
+                MessageBox.Show("Error occurred while processing data for http://www.crowdstatus.net\r\n\r\n" +
+                        ex.ToString(),
+                    "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+        #endregion
 
-
-
-        #region Private Methods
         #region CountSentEmails
-        private long CountSentEmails(DateTime SearchDate, string ExcludeFolderNamePattern = null)
-        {
-            Regex exRx = null;
-
-            if (!String.IsNullOrEmpty(ExcludeFolderNamePattern))
-                exRx = new Regex(ExcludeFolderNamePattern,
-                    RegexOptions.Compiled | RegexOptions.Singleline);
-
-            return CountSentEmails(SearchDate, exRx);
-        }
-
-        private long CountSentEmails(DateTime SearchDate, Regex ExcludeFolderNameRegex)
-        {
-            Outlook.NameSpace ns = this.Application.GetNamespace("MAPI");
-            Outlook.MAPIFolder sentFolder = ns.GetDefaultFolder(OlDefaultFolders.olFolderSentMail);
-
-            return CountFolderItems(sentFolder, SearchDate, ExcludeFolderNameRegex);
-        }
-        #endregion
-        #region CountReceivedEmails
-        private long CountReceivedEmails(DateTime SearchDate, string ExcludeFolderNamePattern = null)
-        {
-            Regex exRx = null;
-
-            if (!String.IsNullOrEmpty(ExcludeFolderNamePattern))
-                exRx = new Regex(ExcludeFolderNamePattern,
-                    RegexOptions.Compiled | RegexOptions.Singleline);
-
-            return CountSentEmails(SearchDate, exRx);
-        }
-
-        private long CountReceivedEmails(DateTime SearchDate, Regex ExcludeFolderNameRegex)
-        {
-            long itemCount = 0;
-            Outlook.NameSpace ns = this.Application.GetNamespace("MAPI");
-
-            foreach (Outlook.MAPIFolder f in ns.Folders)
-                if (f.DefaultItemType == OlItemType.olMailItem)
-                    itemCount += CountFolderItems(f, SearchDate, ExcludeFolderNameRegex);
-
-            return itemCount;
-        }
-        #endregion
-        #region CountFolderItems
-        private long CountFolderItems(MAPIFolder Folder, DateTime SearchDate,
+        private long CountSentEmails(DateTime SearchDate, out long TotalCount,
             string ExcludeFolderNamePattern = null)
         {
             Regex exRx = null;
@@ -141,34 +143,117 @@ namespace MailCountAddIn2010
                 exRx = new Regex(ExcludeFolderNamePattern,
                     RegexOptions.Compiled | RegexOptions.Singleline);
 
-            return CountFolderItems(Folder, SearchDate, exRx);
+            return CountSentEmails(SearchDate, out TotalCount, exRx);
         }
 
-        private long CountFolderItems(MAPIFolder Folder, DateTime SearchDate,
+        private long CountSentEmails(DateTime SearchDate, out long TotalCount, Regex ExcludeFolderNameRegex)
+        {
+            Outlook.NameSpace ns = this.Application.GetNamespace("MAPI");
+            Outlook.MAPIFolder sentFolder = ns.GetDefaultFolder(OlDefaultFolders.olFolderSentMail);
+
+            //w = String.Empty;
+
+            return CountFolderItems(sentFolder, SearchDate, out TotalCount, ExcludeFolderNameRegex);
+        }
+        #endregion
+        #region CountReceivedEmails
+        private long CountReceivedEmails(DateTime SearchDate, out long TotalCount,
+            string ExcludeFolderNamePattern = null)
+        {
+            Regex exRx = null;
+
+            if (!String.IsNullOrEmpty(ExcludeFolderNamePattern))
+                exRx = new Regex(ExcludeFolderNamePattern,
+                    RegexOptions.Compiled | RegexOptions.Singleline);
+
+            return CountReceivedEmails(SearchDate, out TotalCount, exRx);
+        }
+
+        private long CountReceivedEmails(DateTime SearchDate, out long TotalCount,
             Regex ExcludeFolderNameRegex)
         {
             long itemCount = 0;
+            TotalCount = 0;
+            long tc = 0;
+            Outlook.NameSpace ns = this.Application.GetNamespace("MAPI");
+
+            //w = String.Empty;
+
+            foreach (Outlook.MAPIFolder f in ns.Folders)
+            {
+                //MessageBox.Show(f.Name,
+                //    "Folder Info",
+                //    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                if (f.DefaultItemType == OlItemType.olMailItem)
+                {
+                    tc = 0;
+                    itemCount += CountFolderItems(f, SearchDate, out tc, ExcludeFolderNameRegex);
+                    TotalCount += tc;
+                }
+            }
+
+            return itemCount;
+        }
+        #endregion
+
+        #region CountFolderItems
+        private long CountFolderItems(Folder Folder, DateTime SearchDate,
+            out long TotalCount, string ExcludeFolderNamePattern = null)
+        {
+            Regex exRx = null;
+
+            if (!String.IsNullOrEmpty(ExcludeFolderNamePattern))
+                exRx = new Regex(ExcludeFolderNamePattern,
+                    RegexOptions.Compiled | RegexOptions.Singleline);
+
+            return CountFolderItems(Folder, SearchDate, out TotalCount, exRx);
+        }
+
+        private long CountFolderItems(MAPIFolder Folder, DateTime SearchDate,
+            out long TotalCount, Regex ExcludeFolderNameRegex)
+        {
+            long itemCount = 0;
+            TotalCount = 0;
+            long tc = 0;
             Items items = Folder.Items;
-            items.SetColumns("SentOn");
+            try
+            {
+                items.SetColumns("SentOn");
+            }
+            catch { }
             Folders folders = Folder.Folders;
-            DateTime sd = SearchDate.Date;
+
+            if (Folder == null)
+                return 0;
+
+            if (ExcludeFolderNameRegex != null && ExcludeFolderNameRegex.IsMatch(Folder.Name))
+                return 0;
 
             // count items in folder
+            //w += Folder.Name + " (";
+
             foreach (Object o in items)
             {
                 if (o is Outlook.MailItem)
                 {
+                    TotalCount++;
                     MailItem mi = o as MailItem;
-                    DateTime misd = mi.SentOn.Date;
-                    if (misd == sd)
+                    if (DateTime.Compare(mi.SentOn.Date, SearchDate.Date) == 0)
                         itemCount++;
                 }
             }
 
+            //w += TotalCount.ToString() + ")\r\n";
+
             // count items in sub-folders
             foreach (Folder f in folders)
                 if (ExcludeFolderNameRegex == null || !ExcludeFolderNameRegex.IsMatch(f.Name))
-                    itemCount += CountFolderItems(f, SearchDate, ExcludeFolderNameRegex);
+                {
+                    tc = 0;
+                    itemCount += CountFolderItems(f, SearchDate, out tc, ExcludeFolderNameRegex);
+                    TotalCount += tc;
+                }
 
             return itemCount;
         }
@@ -185,6 +270,33 @@ namespace MailCountAddIn2010
                 }
             }
         }
+        #endregion
+
+        #region SendToCrowdStatus
+        private async Task SendToCrowdStatus(DateTime SearchDate, string EmailAddress,
+            long SentMailCount, long ReceivedMailCount)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.BaseAddress = new Uri("http://www.crowdstatus.net/api");
+                client.DefaultRequestHeaders.Accept.Clear();
+                client.DefaultRequestHeaders.Accept.Add(
+                    new MediaTypeWithQualityHeaderValue("application/x-www-form-urlencoded"));
+
+                HttpResponseMessage res = await client.PutAsync("",
+                                          new FormUrlEncodedContent(
+                                              new Dictionary<string, string>
+                                              {
+                                                  { "vat", "emails" },
+                                                  { "value", ReceivedMailCount.ToString() },
+                                                  { "timestamp", SearchDate.Date.ToString("yyyy-MM-dd") },
+                                                  { "author", EmailAddress }
+                                              }));
+
+                res.EnsureSuccessStatusCode();
+            }
+        }
+
         #endregion
         #endregion
 

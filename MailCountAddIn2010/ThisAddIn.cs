@@ -20,6 +20,8 @@ namespace MailCountAddIn2010
 {
     public partial class ThisAddIn
     {
+        // now using VisualStudio Online
+
         #region Constants
         public const string PROD_ID = "MailCountAddIn2010";
         public const string PROD_SHORT_NAME = "CrowdSource MailCount";

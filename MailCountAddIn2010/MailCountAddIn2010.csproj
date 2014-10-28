@@ -40,15 +40,15 @@
     <PublishUrl>H:\Transfer\MailCount\</PublishUrl>
     <InstallUrl />
     <TargetCulture>en</TargetCulture>
-    <ApplicationVersion>1.0.0.25</ApplicationVersion>
+    <ApplicationVersion>1.0.0.54</ApplicationVersion>
     <AutoIncrementApplicationRevision>true</AutoIncrementApplicationRevision>
     <UpdateEnabled>false</UpdateEnabled>
     <UpdateInterval>0</UpdateInterval>
     <UpdateIntervalUnits>days</UpdateIntervalUnits>
-    <ProductName>MailCountAddIn2010</ProductName>
-    <PublisherName>Richard Prinz</PublisherName>
-    <SupportUrl />
-    <FriendlyName>Mail Count</FriendlyName>
+    <ProductName>CrowdSource Outlook 2010 mail count plugin</ProductName>
+    <PublisherName>%28c%29 Copyright 2014 - richard.prinz%40min.at</PublisherName>
+    <SupportUrl>http://www.crowdstatus.net/de/emails</SupportUrl>
+    <FriendlyName>CrowdSource Mail Count</FriendlyName>
     <OfficeApplicationDescription>Tracks your current email count %28and ONLY the count of your sent and received emails - nothing else!%29 per day on www.croudstatus.net</OfficeApplicationDescription>
     <LoadBehavior>3</LoadBehavior>
   </PropertyGroup>

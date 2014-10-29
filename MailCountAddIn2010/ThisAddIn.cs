@@ -14,6 +14,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using Microsoft.Win32;
 using System.Globalization;
+using Microsoft.Office.Core;
+using System.Drawing;
 #endregion
 
 namespace MailCountAddIn2010
@@ -96,6 +98,8 @@ namespace MailCountAddIn2010
         }
         #endregion
         #endregion
+
+
 
         #region Private Methods
         #region InitPlugin
@@ -268,6 +272,7 @@ namespace MailCountAddIn2010
             }
         }
         #endregion
+
         #region DisposePlugin
         private void DisposePlugin()
         {

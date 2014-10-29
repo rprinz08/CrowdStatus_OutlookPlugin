@@ -59,5 +59,25 @@ namespace MailCountAddIn2010.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap CsMailCounAboutIcon {
+            get {
+                object obj = ResourceManager.GetObject("CsMailCounAboutIcon", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap CsMailCountLogo {
+            get {
+                object obj = ResourceManager.GetObject("CsMailCountLogo", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }

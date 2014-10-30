@@ -73,6 +73,16 @@ namespace MailCountAddIn2010.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap CsMailCountAboutBg {
+            get {
+                object obj = ResourceManager.GetObject("CsMailCountAboutBg", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap CsMailCountLogo {
             get {
                 object obj = ResourceManager.GetObject("CsMailCountLogo", resourceCulture);

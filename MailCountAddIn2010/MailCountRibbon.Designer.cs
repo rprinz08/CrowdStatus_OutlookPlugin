@@ -37,6 +37,7 @@
             this.tabMailCount = this.Factory.CreateRibbonTab();
             this.tabGrpMailCount = this.Factory.CreateRibbonGroup();
             this.btnConfig = this.Factory.CreateRibbonButton();
+            this.btnResults = this.Factory.CreateRibbonButton();
             this.btnAbout = this.Factory.CreateRibbonButton();
             this.tabMailCount.SuspendLayout();
             this.tabGrpMailCount.SuspendLayout();
@@ -50,6 +51,7 @@
             // tabGrpMailCount
             // 
             this.tabGrpMailCount.Items.Add(this.btnConfig);
+            this.tabGrpMailCount.Items.Add(this.btnResults);
             this.tabGrpMailCount.Items.Add(this.btnAbout);
             this.tabGrpMailCount.Label = "Mail-Count";
             this.tabGrpMailCount.Name = "tabGrpMailCount";
@@ -64,6 +66,17 @@
             this.btnConfig.ScreenTip = "Configure Mail-Count plugin";
             this.btnConfig.ShowImage = true;
             this.btnConfig.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnConfig_Click);
+            // 
+            // btnResults
+            // 
+            this.btnResults.ControlSize = Microsoft.Office.Core.RibbonControlSize.RibbonControlSizeLarge;
+            this.btnResults.Description = "Configure MailCount plugin";
+            this.btnResults.Image = global::MailCountAddIn2010.Properties.Resources.CsMailCountResults;
+            this.btnResults.Label = "Results";
+            this.btnResults.Name = "btnResults";
+            this.btnResults.ScreenTip = "Shows results from crowdstatus";
+            this.btnResults.ShowImage = true;
+            this.btnResults.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.btnResults_Click);
             // 
             // btnAbout
             // 
@@ -95,6 +108,7 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup tabGrpMailCount;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnConfig;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton btnAbout;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton btnResults;
     }
 
     partial class ThisRibbonCollection

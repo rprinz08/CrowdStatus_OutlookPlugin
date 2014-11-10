@@ -40,7 +40,7 @@
     <PublishUrl>Dist\</PublishUrl>
     <InstallUrl />
     <TargetCulture>en</TargetCulture>
-    <ApplicationVersion>1.0.0.75</ApplicationVersion>
+    <ApplicationVersion>1.0.0.92</ApplicationVersion>
     <AutoIncrementApplicationRevision>true</AutoIncrementApplicationRevision>
     <UpdateEnabled>false</UpdateEnabled>
     <UpdateInterval>0</UpdateInterval>
@@ -211,6 +211,7 @@
     can be found.
   -->
   <ItemGroup>
+    <Compile Include="Config.cs" />
     <Compile Include="Dialogs\About.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -222,6 +223,12 @@
     </Compile>
     <Compile Include="Dialogs\Config.Designer.cs">
       <DependentUpon>Config.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Dialogs\Results.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Dialogs\Results.Designer.cs">
+      <DependentUpon>Results.cs</DependentUpon>
     </Compile>
     <Compile Include="MailCountRibbon.cs">
       <SubType>Component</SubType>
@@ -239,6 +246,9 @@
     <EmbeddedResource Include="Dialogs\Config.resx">
       <DependentUpon>Config.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Dialogs\Results.resx">
+      <DependentUpon>Results.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="MailCountRibbon.resx">
       <DependentUpon>MailCountRibbon.cs</DependentUpon>
     </EmbeddedResource>
@@ -255,6 +265,7 @@
     <None Include="app.config" />
     <None Include="MailCountAddIn2010_TemporaryKey.pfx" />
     <None Include="packages.config" />
+    <None Include="Properties\DataSources\Config.datasource" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -278,6 +289,7 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
+    <None Include="Resources\CsMailCountResults.png" />
     <None Include="Resources\CsMailCounAboutIcon.png" />
     <Content Include="Dist\setup.txt" />
     <Content Include="Resources\CsMailCounAboutIcon.ico" />

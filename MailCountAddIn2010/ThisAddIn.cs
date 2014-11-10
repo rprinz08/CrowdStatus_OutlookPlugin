@@ -24,63 +24,25 @@ namespace MailCountAddIn2010
     {
         // now using VisualStudio Online
 
-        #region Constants
-        public const string PROD_ID = "MailCountAddIn2010";
-        public const string PROD_SHORT_NAME = "CrowdSource MailCount";
-        public const string PROD_LONG_NAME = "CrowdSource Outlook 2010 mail count plugin";
-        public const string PROD_DESCRIPTION = "Tracks your current email count " +
-            "(and ONLY the count of your sent and received emails - nothing else) " +
-            "per day on www.croudstatus.net";
-
-        private const string REG_SOFTWARE_KEY_NAME = "Software";
-        private const string REG_COMPANY_KEY_NAME = "MIN.at";
-        private const string REG_PRODUCT_KEY_NAME = PROD_ID;
-
-        private const string CONFIG_SHOW_POPUPS_NAME = "ShowPopups";
-        private const bool CONFIG_SHOW_POPUPS_DEFAULT = true;
-
-        private const string CONFIG_SHOW_ERRORS_NAME = "ShowErrors";
-        private const bool CONFIG_SHOW_ERRORS_DEFAULT = true;
-
-        private const string CONFIG_SHOW_DEBUG_NAME = "ShowDebug";
-        private const bool CONFIG_SHOW_DEBUG_DEFAULT = true;
-
-        private const string CONFIG_API_URI_NAME = "ApiUri";
-        private const string CONFIG_API_URI_DEFAULT = "http://www.crowdstatus.net/api";
-
-        private const string CONFIG_LAST_SENT_NAME = "LastSent";
-        private static readonly DateTime CONFIG_LAST_SENT_DEFAULT = DateTime.MinValue;
-
-        private const string CONFIG_LAST_SENT_MAILS = "LastSentMails";
-        private const string CONFIG_LAST_RECEIVED_MAILS = "LastReceived Mails";
-
-        private const string CONFIG_FOLDER_EXCLUDE_PATTERN_NAME = "FolderExcludePattern";
-        private const string CONFIG_FOLDER_EXCLUDE_PATTERN_DEFAULT = "^[Vv]ault";
-        #endregion
-
         #region Variables
-        private bool _configShowPopups = CONFIG_SHOW_POPUPS_DEFAULT;
-        private bool _configShowDebug = CONFIG_SHOW_DEBUG_DEFAULT;
-        private bool _configShowErrors = CONFIG_SHOW_ERRORS_DEFAULT;
-        private string _configApiUri = CONFIG_API_URI_DEFAULT;
-        private DateTime _configLastSent = CONFIG_LAST_SENT_DEFAULT;
-        private string _configFolderExcludePattern = CONFIG_FOLDER_EXCLUDE_PATTERN_DEFAULT;
-
         //private string w;
         private System.Threading.Timer _t;
         private string _currentUsersEmailAddress;
         private Regex _folderExcludeRegex = null;
+        private Config _configuration = null;
         #endregion
 
         #region Event Handler
         #region Plugin_Startup
         private void Plugin_Startup(object sender, System.EventArgs e)
         {
+            _configuration = new Config();
+
             InitPlugin();
 
-            if (_configShowDebug)
+            if (_configuration.ShowDebug)
                 MessageBox.Show("Plugin started.",
-                    PROD_SHORT_NAME + " (Debug)",
+                    Config.PROD_SHORT_NAME + " (Debug)",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
 
             ProcessData();
@@ -91,22 +53,29 @@ namespace MailCountAddIn2010
         {
             DisposePlugin();
 
-            if (_configShowDebug)
+            if (_configuration.ShowDebug)
                 MessageBox.Show("Plugin stopped.",
-                    PROD_SHORT_NAME + " (Debug)",
+                    Config.PROD_SHORT_NAME + " (Debug)",
                     MessageBoxButtons.OK, MessageBoxIcon.Stop);
         }
         #endregion
         #endregion
 
-
+        #region Properties
+        #region Configuration
+        public Config Configuration
+        {
+            get { return _configuration; }
+        }
+        #endregion
+        #endregion
 
         #region Private Methods
         #region InitPlugin
         private void InitPlugin()
         {
             DisposePlugin();
-            InitConfig();
+            _configuration.ReadConfig();
 
             _currentUsersEmailAddress = this.Application.ActiveExplorer().Session
                 .CurrentUser.AddressEntry.GetExchangeUser().PrimarySmtpAddress;
@@ -122,154 +91,11 @@ namespace MailCountAddIn2010
                 Convert.ToInt32(timeRemaining.TotalMilliseconds), // start at next day 00:05:00
                 24 * 60 * 60 * 1000); // repeat every day
 
-            if (_configShowDebug)
+            if (_configuration.ShowDebug)
                 MessageBox.Show(String.Format("Start timer at {0} waiting {1}",
                         dueTime, timeRemaining),
-                    PROD_SHORT_NAME + " (Debug)",
+                    Config.PROD_SHORT_NAME + " (Debug)",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-        #endregion
-        #region InitConfig
-        private void InitConfig()
-        {
-            try
-            {
-                RegistryKey userSwKey = Registry.CurrentUser.OpenSubKey(REG_SOFTWARE_KEY_NAME, true);
-                RegistryKey minSwKey = userSwKey.CreateSubKey(REG_COMPANY_KEY_NAME);
-                RegistryKey addInSwKey = minSwKey.CreateSubKey(REG_PRODUCT_KEY_NAME);
-
-                #region Show Popups
-                _configShowPopups = CONFIG_SHOW_POPUPS_DEFAULT;
-                try
-                {
-                    _configShowPopups = (Convert.ToUInt32(addInSwKey.GetValue(CONFIG_SHOW_POPUPS_NAME,
-                        CONFIG_SHOW_POPUPS_DEFAULT)) > 0);
-                }
-                catch { }
-                try
-                {
-                    addInSwKey.SetValue(CONFIG_SHOW_POPUPS_NAME,
-                        (_configShowPopups ? 1 : 0), RegistryValueKind.DWord);
-                }
-                catch { }
-                #endregion
-
-                #region Show Debug
-                _configShowDebug = CONFIG_SHOW_DEBUG_DEFAULT;
-                try
-                {
-                    _configShowDebug = (Convert.ToUInt32(addInSwKey.GetValue(CONFIG_SHOW_DEBUG_NAME,
-                        CONFIG_SHOW_DEBUG_DEFAULT)) > 0);
-                }
-                catch { }
-                try
-                {
-                    addInSwKey.SetValue(CONFIG_SHOW_DEBUG_NAME,
-                        (_configShowDebug ? 1 : 0), RegistryValueKind.DWord);
-                }
-                catch { }
-                #endregion
-
-                #region Show Errors
-                _configShowErrors = CONFIG_SHOW_ERRORS_DEFAULT;
-                try
-                {
-                    _configShowErrors = (Convert.ToUInt32(addInSwKey.GetValue(CONFIG_SHOW_ERRORS_NAME,
-                        CONFIG_SHOW_ERRORS_DEFAULT)) > 0);
-                }
-                catch { }
-                try
-                {
-                    addInSwKey.SetValue(CONFIG_SHOW_ERRORS_NAME,
-                        (_configShowErrors ? 1 : 0), RegistryValueKind.DWord);
-                }
-                catch { }
-                #endregion
-
-                #region Config API Uri
-                _configApiUri = null;
-                try
-                {
-                    _configApiUri =
-                        addInSwKey.GetValue(CONFIG_API_URI_NAME, CONFIG_API_URI_DEFAULT) as String;
-                }
-                catch { _configApiUri = null; }
-                if (_configApiUri == null)
-                    _configApiUri = CONFIG_API_URI_DEFAULT;
-                try
-                {
-                    addInSwKey.SetValue(CONFIG_API_URI_NAME,
-                        _configApiUri, RegistryValueKind.String);
-                }
-                catch { }
-                #endregion
-
-                #region Last Sent
-                _configLastSent = CONFIG_LAST_SENT_DEFAULT;
-                try
-                {
-                    _configLastSent =
-                        DateTime.ParseExact(
-                            addInSwKey.GetValue(CONFIG_LAST_SENT_NAME, CONFIG_LAST_SENT_DEFAULT) as String,
-                            "yyyyMMdd", CultureInfo.InvariantCulture);
-                }
-                catch { _configLastSent = CONFIG_LAST_SENT_DEFAULT; }
-                try
-                {
-                    addInSwKey.SetValue(CONFIG_LAST_SENT_NAME,
-                        _configLastSent.ToString("yyyyMMdd"), RegistryValueKind.String);
-                }
-                catch { }
-                #endregion
-
-                #region Folder Exclude
-                _configFolderExcludePattern = CONFIG_FOLDER_EXCLUDE_PATTERN_DEFAULT;
-                try
-                {
-                    _configFolderExcludePattern =
-                            addInSwKey.GetValue(CONFIG_FOLDER_EXCLUDE_PATTERN_NAME,
-                                CONFIG_FOLDER_EXCLUDE_PATTERN_DEFAULT) as String;
-                }
-                catch { _configFolderExcludePattern = null; }
-                if (_configFolderExcludePattern == null)
-                    _configFolderExcludePattern = CONFIG_FOLDER_EXCLUDE_PATTERN_DEFAULT;
-                try
-                {
-                    addInSwKey.SetValue(CONFIG_FOLDER_EXCLUDE_PATTERN_NAME,
-                        _configFolderExcludePattern, RegistryValueKind.String);
-                }
-                catch { }
-
-                _folderExcludeRegex = null;
-                if (!String.IsNullOrWhiteSpace(_configFolderExcludePattern))
-                    _folderExcludeRegex = new Regex(_configFolderExcludePattern,
-                        RegexOptions.Singleline | RegexOptions.Compiled);
-                #endregion
-
-                if (_configShowDebug)
-                    MessageBox.Show(String.Format(
-                        "Current plugin configuration values are:\r\n\r\n" +
-                        "{0} = ({1})\r\n{2} = ({3})\r\n{4} = ({5})\r\n{6} = ({7})\r\n{8} = ({9})\r\n",
-                        CONFIG_SHOW_POPUPS_NAME, _configShowPopups,
-                        CONFIG_SHOW_DEBUG_NAME, _configShowDebug,
-                        CONFIG_API_URI_NAME, _configApiUri,
-                        CONFIG_LAST_SENT_NAME, _configLastSent,
-                        CONFIG_FOLDER_EXCLUDE_PATTERN_NAME, _configFolderExcludePattern),
-                        PROD_SHORT_NAME + " (Debug)",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                addInSwKey.Close();
-                minSwKey.Close();
-                userSwKey.Close();
-            }
-            catch (System.Exception ex)
-            {
-                if (_configShowErrors)
-                    MessageBox.Show("Error occurred while configuring plugin\r\n" +
-                            ex.ToString(),
-                        PROD_SHORT_NAME + " error",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
         }
         #endregion
 
@@ -295,42 +121,24 @@ namespace MailCountAddIn2010
         {
             DateTime today = DateTime.Now.Date;
             DateTime yesterday = today.AddDays(-1).Date;
-            string addInSwKeyName = String.Format(@"{0}\{1}\{2}",
-                REG_SOFTWARE_KEY_NAME, REG_COMPANY_KEY_NAME, REG_PRODUCT_KEY_NAME);
 
             try
             {
-                // read registry
-                try
+                if (DateTime.Compare(today, _configuration.LastSent) <= 0)
                 {
-                    using (RegistryKey addInSwKey = Registry.CurrentUser.OpenSubKey(addInSwKeyName, true))
-                    {
-                        if (addInSwKey != null)
-                        {
-                            _configLastSent =
-                                DateTime.ParseExact(
-                                    addInSwKey.GetValue(CONFIG_LAST_SENT_NAME, CONFIG_LAST_SENT_DEFAULT) as String,
-                                    "yyyyMMdd", CultureInfo.InvariantCulture);
+                    if (_configuration.ShowPopups)
+                        MessageBox.Show(String.Format(
+                                "Today is {0:d}\r\n" +
+                                "Last time data was sent: {1:d}\r\n\r\n" +
+                                "Not sending yesterdays {2:d} data as it was already sent!",
+                                    DateTime.Now,
+                                    _configuration.LastSent,
+                                    yesterday.Date),
+                            Config.PROD_SHORT_NAME,
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
-                            if (DateTime.Compare(today, _configLastSent) <= 0)
-                            {
-                                if (_configShowPopups)
-                                    MessageBox.Show(String.Format(
-                                            "Today is {0:d}\r\n" +
-                                            "Last time data was sent: {1:d}\r\n\r\n" +
-                                            "Not sending yesterdays {2:d} data as it was already sent!",
-                                                DateTime.Now,
-                                                _configLastSent,
-                                                yesterday.Date),
-                                        PROD_SHORT_NAME,
-                                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-
-                                return;
-                            }
-                        }
-                    }
+                    return;
                 }
-                catch { }
 
                 // count mails
                 long totalSentMails = 0;
@@ -345,7 +153,7 @@ namespace MailCountAddIn2010
                 //MessageBox.Show(String.Format("Received:\r\n{0}", w), "Message counts",
                 //    MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                if (_configShowPopups)
+                if (_configuration.ShowPopups)
                     MessageBox.Show(String.Format(
                             "Today is {0:d}\r\n" +
                             "Last time data was sent: {1:d}\r\n\r\n" +
@@ -354,43 +162,40 @@ namespace MailCountAddIn2010
                             "\treceived {5} ( from total {6} ) e-mails\r\n" +
                             "\tfor user {7} to http://www.crowdstatus.net/",
                                 DateTime.Now,
-                                _configLastSent,
+                                _configuration.LastSent,
                                 yesterday.Date,
                                 sentMails, totalSentMails,
                                 receivedMails, totalReceivedMails,
                                 _currentUsersEmailAddress),
-                        PROD_SHORT_NAME,
+                        Config.PROD_SHORT_NAME,
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                // write registry
                 try
                 {
-                    using (RegistryKey addInSwKey = Registry.CurrentUser.OpenSubKey(addInSwKeyName, true))
-                    {
-                        if (addInSwKey != null)
-                        {
-                            addInSwKey.SetValue(CONFIG_LAST_SENT_NAME,
-                                today.ToString("yyyyMMdd"), RegistryValueKind.String);
-
-                            addInSwKey.SetValue(CONFIG_LAST_SENT_MAILS,
-                                sentMails, RegistryValueKind.DWord);
-
-                            addInSwKey.SetValue(CONFIG_LAST_RECEIVED_MAILS,
-                                receivedMails, RegistryValueKind.DWord);
-                        }
-                    }
+                    // write registry
+                    _configuration.LastSent = today;
+                    _configuration.LastDate = yesterday;
+                    _configuration.LastSentEmails = sentMails;
+                    _configuration.LastReceivedEmails = receivedMails;
+                    _configuration.WriteConfig();
                 }
                 catch { }
 
                 // send data to service
-                SendToCrowdStatus(today, _currentUsersEmailAddress, sentMails, receivedMails).Wait();
+                if (_configuration.TrackReceivedEmails)
+                    SendToCrowdStatus(today, _currentUsersEmailAddress,
+                        _configuration.TrackReceivedEmailsToken, receivedMails).Wait();
+
+                if (_configuration.TrackSentEmails)
+                    SendToCrowdStatus(today, _currentUsersEmailAddress,
+                        _configuration.TrackSentEmailsToken, sentMails).Wait();
             }
             catch (System.Exception ex)
             {
-                if (_configShowErrors)
+                if (_configuration.ShowErrors)
                     MessageBox.Show("Error occurred while processing data for http://www.crowdstatus.net\r\n\r\n" +
                             ex.ToString(),
-                        PROD_SHORT_NAME + " error",
+                        Config.PROD_SHORT_NAME + " error",
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -536,12 +341,13 @@ namespace MailCountAddIn2010
         #endregion
 
         #region SendToCrowdStatus
-        private async Task SendToCrowdStatus(DateTime SearchDate, string EmailAddress,
-            long SentMailCount, long ReceivedMailCount)
+        private async Task SendToCrowdStatus(
+            DateTime SearchDate, string EmailAddress,
+            string Token, long MailCount)
         {
             using (HttpClient client = new HttpClient())
             {
-                client.BaseAddress = new Uri(_configApiUri);
+                client.BaseAddress = new Uri(_configuration.ApiUri);
                 //client.DefaultRequestHeaders.Accept.Clear();
                 //client.DefaultRequestHeaders.Accept.Add(
                 //    new MediaTypeWithQualityHeaderValue("application/x-www-form-urlencoded"));
@@ -560,9 +366,9 @@ namespace MailCountAddIn2010
                 var req = new HttpRequestMessage(HttpMethod.Put, "/api");
 
                 var keyValues = new List<KeyValuePair<string, string>>();
-                keyValues.Add(new KeyValuePair<string, string>("vat", "emails"));
+                keyValues.Add(new KeyValuePair<string, string>("vat", Token));
                 keyValues.Add(new KeyValuePair<string, string>("author", EmailAddress));
-                keyValues.Add(new KeyValuePair<string, string>("value", ReceivedMailCount.ToString()));
+                keyValues.Add(new KeyValuePair<string, string>("value", MailCount.ToString()));
                 keyValues.Add(new KeyValuePair<string, string>("value_timestamp", SearchDate.Date.ToString("yyyy-MM-dd")));
                 keyValues.Add(new KeyValuePair<string, string>("privacy", "1"));
                 keyValues.Add(new KeyValuePair<string, string>("confidence", "100"));
@@ -570,22 +376,22 @@ namespace MailCountAddIn2010
                 req.Content = new FormUrlEncodedContent(keyValues);
                 string c = await req.Content.ReadAsStringAsync();
 
-                if (_configShowDebug)
+                if (_configuration.ShowDebug)
                     MessageBox.Show(String.Format(
                         "Request to {0}:\r\n\r\n{1}\r\n\r\nContent:\r\n{2}",
                             req.RequestUri, req.ToString(), c),
-                        PROD_SHORT_NAME + " (Debug)",
+                        Config.PROD_SHORT_NAME + " (Debug)",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 HttpResponseMessage res = await client.SendAsync(req);
 
                 c = await res.Content.ReadAsStringAsync();
 
-                if (_configShowDebug)
+                if (_configuration.ShowDebug)
                     MessageBox.Show(String.Format(
                         "Response from {0}:\r\n\r\n{1}\r\n\r\nContent:\r\n{2}",
                             res.RequestMessage.RequestUri, res.ToString(), c),
-                        PROD_SHORT_NAME + " (Debug)",
+                        Config.PROD_SHORT_NAME + " (Debug)",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 res.EnsureSuccessStatusCode();

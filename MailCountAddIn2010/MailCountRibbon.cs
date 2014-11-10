@@ -23,8 +23,11 @@ namespace MailCountAddIn2010
         #region Click
         private void btnConfig_Click(object sender, RibbonControlEventArgs e)
         {
-            Form f = new Dialogs.Config();
-            f.ShowDialog();
+            Config c = new Config();
+            Form f = new Dialogs.Config(c);
+            DialogResult rc = f.ShowDialog();
+            if (rc == DialogResult.OK)
+                c.WriteConfig();
         }
         #endregion
         #endregion
@@ -33,6 +36,15 @@ namespace MailCountAddIn2010
         private void btnAbout_Click(object sender, RibbonControlEventArgs e)
         {
             Form f = new Dialogs.About();
+            f.ShowDialog();
+        }
+        #endregion
+        #endregion
+        #region btnResults
+        #region Click
+        private void btnResults_Click(object sender, RibbonControlEventArgs e)
+        {
+            Form f = new Dialogs.Results();
             f.ShowDialog();
         }
         #endregion

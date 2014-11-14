@@ -23,11 +23,14 @@ namespace MailCountAddIn2010
         #region Click
         private void btnConfig_Click(object sender, RibbonControlEventArgs e)
         {
-            Config c = new Config();
-            Form f = new Dialogs.Config(c);
+            Config cfg = Config.Singleton;
+            cfg.ReadConfig();
+
+            Form f = new Dialogs.Config(cfg);
             DialogResult rc = f.ShowDialog();
+
             if (rc == DialogResult.OK)
-                c.WriteConfig();
+                cfg.WriteConfig();
         }
         #endregion
         #endregion

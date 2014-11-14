@@ -17,13 +17,14 @@ namespace MailCountAddIn2010.Dialogs
     public partial class Config : Form
     {
         #region Variables
-        MailCountAddIn2010.Config _configuration;
+        MailCountAddIn2010.Config _cfg;
         #endregion
 
         #region Ctor / Dtor
         public Config(MailCountAddIn2010.Config Configuration)
         {
-            _configuration = Configuration;
+            _cfg = Configuration;
+
             InitializeComponent();
 
             this.Text = String.Format("Configure {0}", Tools.AssemblyTitle);
@@ -43,7 +44,10 @@ namespace MailCountAddIn2010.Dialogs
         #region Load
         private void Config_Load(object sender, EventArgs e)
         {
-            configBindingSource.DataSource = _configuration;
+            trackSentEmailsCheckBox_CheckedChanged(trackSentEmailsCheckBox, new EventArgs());
+            trackReceivedEmailsCheckBox_CheckedChanged(trackReceivedEmailsCheckBox, new EventArgs());
+
+            configBindingSource.DataSource = _cfg;
         }
         #endregion
         #region FormClosing
@@ -103,6 +107,14 @@ namespace MailCountAddIn2010.Dialogs
             errorProvider1.SetError((Control)sender, error);
         }
         #endregion
+
+        #region trackSentEmailsCheckBox_CheckedChanged
+        private void trackSentEmailsCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            trackSentEmailsTokenTextBox.ReadOnly = !trackSentEmailsCheckBox.Checked;
+            ValidateControl(trackSentEmailsTokenTextBox);
+        }
+        #endregion
         #region trackSentEmailsTokenTextBox_Validating
         private void trackSentEmailsTokenTextBox_Validating(object sender, CancelEventArgs e)
         {
@@ -120,6 +132,14 @@ namespace MailCountAddIn2010.Dialogs
             errorProvider1.SetError((Control)sender, error);
         }
         #endregion
+
+        #region trackReceivedEmailsCheckBox_CheckedChanged
+        private void trackReceivedEmailsCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            trackReceivedEmailsTokenTextBox.ReadOnly = !trackReceivedEmailsCheckBox.Checked;
+            ValidateControl(trackReceivedEmailsTokenTextBox);
+        }
+        #endregion
         #region trackReceivedEmailsTokenTextBox_Validating
         private void trackReceivedEmailsTokenTextBox_Validating(object sender, CancelEventArgs e)
         {
@@ -135,20 +155,6 @@ namespace MailCountAddIn2010.Dialogs
                 error = "If track received emails is checked a crowd status question token must be entered.";
 
             errorProvider1.SetError((Control)sender, error);
-        }
-        #endregion
-        #region trackSentEmailsCheckBox_CheckedChanged
-        private void trackSentEmailsCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            trackSentEmailsTokenTextBox.ReadOnly = !trackSentEmailsCheckBox.Checked;
-            ValidateControl(trackSentEmailsTokenTextBox);
-        }
-        #endregion
-        #region trackReceivedEmailsCheckBox_CheckedChanged
-        private void trackReceivedEmailsCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            trackReceivedEmailsTokenTextBox.ReadOnly = !trackReceivedEmailsCheckBox.Checked;
-            ValidateControl(trackReceivedEmailsTokenTextBox);
         }
         #endregion
         #endregion

@@ -45,7 +45,7 @@
             // tabMailCount
             // 
             this.tabMailCount.Groups.Add(this.tabGrpMailCount);
-            this.tabMailCount.Label = "Crowd Source";
+            this.tabMailCount.Label = "Crowd Status";
             this.tabMailCount.Name = "tabMailCount";
             // 
             // tabGrpMailCount

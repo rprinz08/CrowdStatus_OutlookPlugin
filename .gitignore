@@ -154,12 +154,8 @@ $RECYCLE.BIN/
 
 # Mac desktop service store files
 .DS_Store
-/MailCountAddIn2010/Dist/CS_MailCount_Plugin.cer
-/MailCountAddIn2010/Dist/setup.txt
-/MailCountAddIn2010/Dist/setup.exe
+
+# Project excludes
 /MailCountAddIn2010/Dist/MailCountAddIn2010.vsto
 /MailCountAddIn2010/Dist/setup.txt
-/MailCountAddIn2010/Dist/setup.exe
-/MailCountAddIn2010/Dist/MailCountAddIn2010.vsto
-/MailCountAddIn2010/Dist/CS_MailCount_Plugin.cer
 /MailCountAddIn2010/Dist/Application Files

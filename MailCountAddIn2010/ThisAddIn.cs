@@ -29,18 +29,18 @@ namespace MailCountAddIn2010
         private System.Threading.Timer _t;
         private string _currentUsersEmailAddress;
         private Regex _folderExcludeRegex = null;
-        private Config _configuration = null;
+        private Config _cfg = null;
         #endregion
 
         #region Event Handler
         #region Plugin_Startup
         private void Plugin_Startup(object sender, System.EventArgs e)
         {
-            _configuration = new Config();
+            _cfg = Config.Singleton;
 
             InitPlugin();
 
-            if (_configuration.ShowDebug)
+            if (_cfg.ShowDebug)
                 MessageBox.Show("Plugin started.",
                     Config.PROD_SHORT_NAME + " (Debug)",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -53,7 +53,7 @@ namespace MailCountAddIn2010
         {
             DisposePlugin();
 
-            if (_configuration.ShowDebug)
+            if (_cfg.ShowDebug)
                 MessageBox.Show("Plugin stopped.",
                     Config.PROD_SHORT_NAME + " (Debug)",
                     MessageBoxButtons.OK, MessageBoxIcon.Stop);
@@ -65,7 +65,7 @@ namespace MailCountAddIn2010
         #region Configuration
         public Config Configuration
         {
-            get { return _configuration; }
+            get { return _cfg; }
         }
         #endregion
         #endregion
@@ -75,7 +75,7 @@ namespace MailCountAddIn2010
         private void InitPlugin()
         {
             DisposePlugin();
-            _configuration.ReadConfig();
+            _cfg.ReadConfig();
 
             _currentUsersEmailAddress = this.Application.ActiveExplorer().Session
                 .CurrentUser.AddressEntry.GetExchangeUser().PrimarySmtpAddress;
@@ -91,7 +91,7 @@ namespace MailCountAddIn2010
                 Convert.ToInt32(timeRemaining.TotalMilliseconds), // start at next day 00:05:00
                 24 * 60 * 60 * 1000); // repeat every day
 
-            if (_configuration.ShowDebug)
+            if (_cfg.ShowDebug)
                 MessageBox.Show(String.Format("Start timer at {0} waiting {1}",
                         dueTime, timeRemaining),
                     Config.PROD_SHORT_NAME + " (Debug)",
@@ -124,15 +124,15 @@ namespace MailCountAddIn2010
 
             try
             {
-                if (DateTime.Compare(today, _configuration.LastSent) <= 0)
+                if (DateTime.Compare(today, _cfg.LastSent) <= 0)
                 {
-                    if (_configuration.ShowPopups)
+                    if (_cfg.ShowPopups)
                         MessageBox.Show(String.Format(
                                 "Today is {0:d}\r\n" +
                                 "Last time data was sent: {1:d}\r\n\r\n" +
                                 "Not sending yesterdays {2:d} data as it was already sent!",
                                     DateTime.Now,
-                                    _configuration.LastSent,
+                                    _cfg.LastSent,
                                     yesterday.Date),
                             Config.PROD_SHORT_NAME,
                             MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -153,7 +153,7 @@ namespace MailCountAddIn2010
                 //MessageBox.Show(String.Format("Received:\r\n{0}", w), "Message counts",
                 //    MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                if (_configuration.ShowPopups)
+                if (_cfg.ShowPopups)
                     MessageBox.Show(String.Format(
                             "Today is {0:d}\r\n" +
                             "Last time data was sent: {1:d}\r\n\r\n" +
@@ -162,7 +162,7 @@ namespace MailCountAddIn2010
                             "\treceived {5} ( from total {6} ) e-mails\r\n" +
                             "\tfor user {7} to http://www.crowdstatus.net/",
                                 DateTime.Now,
-                                _configuration.LastSent,
+                                _cfg.LastSent,
                                 yesterday.Date,
                                 sentMails, totalSentMails,
                                 receivedMails, totalReceivedMails,
@@ -173,26 +173,26 @@ namespace MailCountAddIn2010
                 try
                 {
                     // write registry
-                    _configuration.LastSent = today;
-                    _configuration.LastDate = yesterday;
-                    _configuration.LastSentEmails = sentMails;
-                    _configuration.LastReceivedEmails = receivedMails;
-                    _configuration.WriteConfig();
+                    _cfg.LastSent = today;
+                    _cfg.LastDate = yesterday;
+                    _cfg.LastSentEmails = sentMails;
+                    _cfg.LastReceivedEmails = receivedMails;
+                    _cfg.WriteConfig();
                 }
                 catch { }
 
                 // send data to service
-                if (_configuration.TrackReceivedEmails)
+                if (_cfg.TrackReceivedEmails)
                     SendToCrowdStatus(today, _currentUsersEmailAddress,
-                        _configuration.TrackReceivedEmailsToken, receivedMails).Wait();
+                        _cfg.TrackReceivedEmailsToken, receivedMails).Wait();
 
-                if (_configuration.TrackSentEmails)
+                if (_cfg.TrackSentEmails)
                     SendToCrowdStatus(today, _currentUsersEmailAddress,
-                        _configuration.TrackSentEmailsToken, sentMails).Wait();
+                        _cfg.TrackSentEmailsToken, sentMails).Wait();
             }
             catch (System.Exception ex)
             {
-                if (_configuration.ShowErrors)
+                if (_cfg.ShowErrors)
                     MessageBox.Show("Error occurred while processing data for http://www.crowdstatus.net\r\n\r\n" +
                             ex.ToString(),
                         Config.PROD_SHORT_NAME + " error",
@@ -347,7 +347,7 @@ namespace MailCountAddIn2010
         {
             using (HttpClient client = new HttpClient())
             {
-                client.BaseAddress = new Uri(_configuration.ApiUri);
+                client.BaseAddress = new Uri(_cfg.ApiUri);
                 //client.DefaultRequestHeaders.Accept.Clear();
                 //client.DefaultRequestHeaders.Accept.Add(
                 //    new MediaTypeWithQualityHeaderValue("application/x-www-form-urlencoded"));
@@ -376,7 +376,7 @@ namespace MailCountAddIn2010
                 req.Content = new FormUrlEncodedContent(keyValues);
                 string c = await req.Content.ReadAsStringAsync();
 
-                if (_configuration.ShowDebug)
+                if (_cfg.ShowDebug)
                     MessageBox.Show(String.Format(
                         "Request to {0}:\r\n\r\n{1}\r\n\r\nContent:\r\n{2}",
                             req.RequestUri, req.ToString(), c),
@@ -387,7 +387,7 @@ namespace MailCountAddIn2010
 
                 c = await res.Content.ReadAsStringAsync();
 
-                if (_configuration.ShowDebug)
+                if (_cfg.ShowDebug)
                     MessageBox.Show(String.Format(
                         "Response from {0}:\r\n\r\n{1}\r\n\r\nContent:\r\n{2}",
                             res.RequestMessage.RequestUri, res.ToString(), c),

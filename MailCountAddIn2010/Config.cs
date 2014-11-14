@@ -16,8 +16,8 @@ namespace MailCountAddIn2010
     {
         #region Constants
         public const string PROD_ID = "MailCountAddIn2010";
-        public const string PROD_SHORT_NAME = "CrowdSource MailCount";
-        public const string PROD_LONG_NAME = "CrowdSource Outlook 2010 mail count plugin";
+        public const string PROD_SHORT_NAME = "CrowdStatus MailCount";
+        public const string PROD_LONG_NAME = "CrowdStatus Outlook 2010 mail count plugin";
         public const string PROD_DESCRIPTION = "Tracks your current email count " +
             "(and ONLY the count of your sent and received emails - nothing else) " +
             "per day on www.croudstatus.net";
@@ -85,6 +85,8 @@ namespace MailCountAddIn2010
 
         private string _configFolderExcludePattern = CONFIG_FOLDER_EXCLUDE_PATTERN_DEFAULT;
         private Regex _folderExcludeRegex = null;
+
+        private static Config _config;
         #endregion
 
         #region Ctor / Dtor
@@ -97,6 +99,11 @@ namespace MailCountAddIn2010
 
             ReadConfig();
         }
+
+        static Config()
+        {
+            _config = new Config();
+        }
         #endregion
 
         #region Properties
@@ -104,6 +111,12 @@ namespace MailCountAddIn2010
         public string RegistryRoot
         {
             get { return _swRegistryRoot; }
+        }
+        #endregion
+        #region Singleton
+        public static Config Singleton
+        {
+            get { return _config; }
         }
         #endregion
 
